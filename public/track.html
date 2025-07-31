@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Track Request - Blood Bank</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      background-color: #f8f9fa;
+      font-family: 'Segoe UI', sans-serif;
+    }
+    .track-container {
+      max-width: 600px;
+      background-color: white;
+      padding: 40px;
+      margin: 80px auto;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+    .btn-track {
+      background-color: #dc3545;
+      border: none;
+    }
+    .btn-track:hover {
+      background-color: #b02a37;
+    }
+    footer {
+      background-color: #212529;
+      color: white;
+      padding: 20px 0;
+      margin-top: 50px;
+    }
+  </style>
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-danger">
+  <div class="container">
+    <a class="navbar-brand fw-bold" href="index.html">🩸 Blood Bank</a>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+        <li class="nav-item"><a class="nav-link active" href="#">Track</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<!-- Track Section -->
+<div class="container">
+  <div class="track-container">
+    <h3 class="text-center text-danger mb-4">Track Your Blood Request</h3>
+    <form id="trackForm">
+      <div class="mb-3">
+        <label for="email" class="form-label">Enter your Email</label>
+        <input type="email" class="form-control" id="email" placeholder="you@example.com" required />
+      </div>
+      <button type="submit" class="btn btn-track w-100">Track Request</button>
+    </form>
+
+    <div class="mt-4" id="statusResult" style="display:none;">
+      <h5 class="text-success">Request Status:</h5>
+      <ul class="list-group" id="statusList"></ul>
+    </div>
+  </div>
+</div>
+
+<!-- Footer -->
+<footer class="text-center mt-5">
+  <div class="container">
+    <p class="mb-0">&copy; 2025 Blood Bank System | Stay Safe ❤️</p>
+  </div>
+</footer>
+
+<script>
+document.getElementById('trackForm').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  const email = document.getElementById('email').value.trim();
+
+  if (!email) {
+    alert("Please enter your email.");
+    return;
+  }
+
+  try {
+    const res = await fetch(`/api/request-status/${email}`);
+    const data = await res.json();
+
+    const list = document.getElementById('statusList');
+    list.innerHTML = '';
+
+    if (data.length > 0) {
+      data.forEach(req => {
+        const li = document.createElement('li');
+        li.className = 'list-group-item';
+        let html = `
+          <strong>Name:</strong> ${req.name} <br>
+          <strong>Blood Type:</strong> ${req.bloodGroup} <br>
+          <strong>Urgency:</strong> ${req.urgency} <br>
+          <strong>Status:</strong> ${req.status || 'Pending'} <br>
+        `;
+
+        if (req.status === 'Approved' && req.matchedDonor) {
+          html += `
+            <hr>
+            <strong>Matched Donor Details:</strong><br>
+            Name: ${req.matchedDonor.fullName} <br>
+            Email: ${req.matchedDonor.email} <br>
+            Phone: ${req.matchedDonor.phone} <br>
+            City: ${req.matchedDonor.city} <br>
+            Blood Group: ${req.matchedDonor.bloodGroup}
+          `;
+        }
+
+        li.innerHTML = html;
+        list.appendChild(li);
+      });
+      document.getElementById('statusResult').style.display = 'block';
+    } else {
+      list.innerHTML = '<li class="list-group-item text-danger">No requests found for this email.</li>';
+      document.getElementById('statusResult').style.display = 'block';
+    }
+
+  } catch (err) {
+    console.error(err);
+    alert("Error fetching request status.");
+  }
+});
+</script>
+
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
